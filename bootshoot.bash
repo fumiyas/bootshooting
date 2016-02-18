@@ -43,7 +43,12 @@ lib_requires=(
 
 bootshoot_dir="/tmp/${0##*/}.$$.tmp"
 
+echo "Creating bootshooting directory $bootshoot_dir ..."
+
 mkdir -m 0700 "$bootshoot_dir"
+
+mount -t tmpfs -o size=33554432,mode=0755 tmpfs "$bootshoot_dir"
+
 mkdir -m 0755 \
   "$bootshoot_dir/dev" \
   "$bootshoot_dir/proc" \
@@ -54,6 +59,8 @@ mkdir -m 0755 \
 ln -s lib "$bootshoot_dir/lib64"
 
 ## ----------------------------------------------------------------------
+
+echo "Copying device files in /dev to $bootshoot_dir/dev ..."
 
 (
   cd / && find dev ! -type f -print \
@@ -69,6 +76,8 @@ ln -s lib "$bootshoot_dir/lib64"
 
 ## ----------------------------------------------------------------------
 
+echo "Copying commands to $bootshoot_dir/bin ..."
+
 for bin in "${bin_requires[@]}"; do
   cp -pL "$bin" "$bootshoot_dir/bin/"
 done
@@ -77,6 +86,10 @@ for bin in "${bin_optionals[@]}"; do
   cp -pL "$bin" "$bootshoot_dir/bin/" || continue
   bin_optionals_found+=("$bin")
 done
+
+## ----------------------------------------------------------------------
+
+echo "Copying required libraries to $bootshoot_dir/lib ..."
 
 lib_requires+=($(
   ldd "${bin_requires[@]}" "${bin_optionals_found[@]}" \
@@ -92,9 +105,66 @@ done
 ## ----------------------------------------------------------------------
 
 if [[ -x $busybox_path ]]; then
+  echo "Creating busybox commands in $bootshoot_dir/bin ..."
+
   for bin in $("$busybox_path" |sed -n '1,/Currently defined functions/d; s/, */ /gp'); do
     [[ -e "$bootshoot_dir/bin/$bin" ]] && continue
     ln -s busybox "$bootshoot_dir/bin/$bin"
   done
 fi
+
+## ======================================================================
+
+tty=$(tty |sed 's#^/dev/##')
+export tty
+
+echo "Entering bootshooting directory $bootshoot_dir ..."
+cat <<'EOT' >"$bootshoot_dir/bin/bootshoot"
+#!/bin/sh
+
+export PATH=/bin
+trap '' INT TERM
+
+echo 'Mounting /proc ...'
+mount -t proc proc /proc
+
+echo 'Stopping all processes except bootshooting processes ...'
+pids=$(
+  ps -ef \
+  |tail -n +2 \
+  |egrep -v "[ @]$tty( |$)" \
+  |awk '{print $2}' \
+  ;
+)
+kill -STOP $pids
+
+echo 'Starting /bin/sh ...'
+/bin/sh
+
+## Dummy file for poweroff(8) and reboot(8)
+: /proc/cmdline
+
+echo 'Unmounting /proc ...'
+umount /proc
+
+while :; do
+  echo -n 'Poweroff? [y/N] '
+  read answer
+  if [ x"$answer" = x"y" ]; then
+    poweroff -f
+  fi
+
+  echo -n 'Reboot? [y/N] '
+  read answer
+  if [ x"$answer" = x"y" ]; then
+    reboot -f
+  fi
+
+  echo 'Starting /bin/sh again ...'
+  /bin/sh
+done
+EOT
+chmod +x "$bootshoot_dir/bin/bootshoot"
+
+exec chroot "$bootshoot_dir" /bin/bootshoot
 
