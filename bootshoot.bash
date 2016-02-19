@@ -125,10 +125,22 @@ cat <<'EOT' >"$bootshoot_dir/bin/bootshoot"
 export PATH=/bin
 trap '' INT TERM
 
+confirm() {
+  echo -n 'Are you sure? [y/N] '
+
+  read answer
+
+  if [ x"$answer" = "y" ]; then
+    return 0
+  fi
+
+  return 1
+}
+
 echo 'Mounting /proc ...'
 mount -t proc proc /proc
 
-echo 'Stopping all processes except bootshooting processes ...'
+echo 'Suspending all processes except bootshooting processes ...'
 pids=$(
   ps -ef \
   |tail -n +2 \
@@ -148,20 +160,40 @@ echo 'Unmounting /proc ...'
 umount /proc
 
 while :; do
-  echo -n 'Poweroff? [y/N] '
+  echo
+  echo 'Menu:'
+  echo
+  echo '  1 Force to poweroff'
+  echo '  2 Force to reboot'
+  echo '  3 Resume all suspended processes'
+  echo '  4 Exit from bootshooting directory'
+  echo '  5 Start /bin/sh again'
+  echo
+  echo -n 'Enter a number to do: '
+
   read answer
-  if [ x"$answer" = x"y" ]; then
+
+  case $answer in
+  1)
     poweroff -f
-  fi
-
-  echo -n 'Reboot? [y/N] '
-  read answer
-  if [ x"$answer" = x"y" ]; then
+    ;;
+  2)
     reboot -f
-  fi
-
-  echo 'Starting /bin/sh again ...'
-  /bin/sh
+    ;;
+  3)
+    if confirm; then
+      kill -CONT $pids
+    fi
+    ;;
+  4)
+    if confirm; then
+      exit 0
+    fi
+    ;;
+  5)
+    /bin/sh
+    ;;
+  esac
 done
 EOT
 chmod +x "$bootshoot_dir/bin/bootshoot"
