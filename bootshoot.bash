@@ -43,7 +43,7 @@ lib_requires=(
 
 bootshoot_dir="/tmp/${0##*/}.$$.tmp"
 
-echo "Creating bootshooting directory $bootshoot_dir ..."
+echo "Creating BootShooting directory $bootshoot_dir ..."
 
 mkdir -m 0700 "$bootshoot_dir"
 
@@ -56,7 +56,11 @@ mkdir -m 0755 \
   "$bootshoot_dir/bin" \
   "$bootshoot_dir/lib" \
 ;
+
 ln -s lib "$bootshoot_dir/lib64"
+
+## Dummy file for poweroff(8) and reboot(8)
+: >"$bootshoot_dir/proc/cmdline"
 
 ## ----------------------------------------------------------------------
 
@@ -118,19 +122,31 @@ fi
 tty=$(tty |sed 's#^/dev/##')
 export tty
 
-echo "Entering bootshooting directory $bootshoot_dir ..."
+echo "Entering BootBhooting directory $bootshoot_dir ..."
 cat <<'EOT' >"$bootshoot_dir/bin/bootshoot"
 #!/bin/sh
 
+set -u
 export PATH=/bin
+
 trap '' INT TERM
+trap 'umount /proc' EXIT
+
+pids() {
+  ps -ef \
+  |tail -n +2 \
+  |egrep -v "[ @]$tty( |$)" \
+  |awk '{print $2}' \
+  ;
+}
 
 confirm() {
-  echo -n 'Are you sure? [y/N] '
+  local answer
 
+  echo -n 'Are you sure? [y/N] '
   read answer
 
-  if [ x"$answer" = "y" ]; then
+  if [ x"$answer" = x"y" ]; then
     return 0
   fi
 
@@ -140,58 +156,48 @@ confirm() {
 echo 'Mounting /proc ...'
 mount -t proc proc /proc
 
-echo 'Suspending all processes except bootshooting processes ...'
-pids=$(
-  ps -ef \
-  |tail -n +2 \
-  |egrep -v "[ @]$tty( |$)" \
-  |awk '{print $2}' \
-  ;
-)
-kill -STOP $pids
-
-echo 'Starting /bin/sh ...'
-/bin/sh
-
-## Dummy file for poweroff(8) and reboot(8)
-: /proc/cmdline
-
-echo 'Unmounting /proc ...'
-umount /proc
-
 while :; do
   echo
-  echo 'Menu:'
+  echo 'BootShooting Menu:'
   echo
-  echo '  1 Force to poweroff'
-  echo '  2 Force to reboot'
-  echo '  3 Resume all suspended processes'
-  echo '  4 Exit from bootshooting directory'
-  echo '  5 Start /bin/sh again'
+  echo '  1 : Suspend all processes except BootShooting processes'
+  echo '  2 : Start /bin/sh in BootShooting environment'
+  echo '  3 : Force to poweroff'
+  echo '  4 : Force to reboot'
+  echo '  5 : Resume all suspended processes'
+  echo '  6 : Exit from BootShooting environment'
   echo
   echo -n 'Enter a number to do: '
 
   read answer
+  echo
 
   case $answer in
   1)
-    poweroff -f
+    pids=$(pids)
+    kill -STOP $pids
     ;;
   2)
-    reboot -f
+    PS1='BootShooting # ' /bin/sh
     ;;
   3)
+    umount /proc
+    poweroff -f
+    ;;
+  4)
+    umount /proc
+    reboot -f
+    ;;
+  5)
     if confirm; then
+      pids=$(pids)
       kill -CONT $pids
     fi
     ;;
-  4)
+  6)
     if confirm; then
       exit 0
     fi
-    ;;
-  5)
-    /bin/sh
     ;;
   esac
 done
