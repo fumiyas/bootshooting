@@ -31,7 +31,6 @@ bin_requires=(
 bin_optionals=(
   "$busybox_path"
   /usr/bin/shred
-  /usr/sbin/sshd
 )
 bin_optionals_found=()
 
