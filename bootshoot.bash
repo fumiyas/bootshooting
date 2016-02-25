@@ -31,6 +31,7 @@ bin_requires=(
 bin_optionals=(
   "$busybox_path"
   /usr/bin/shred
+  /sbin/fsfreeze
 )
 bin_optionals_found=()
 
