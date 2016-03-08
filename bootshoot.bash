@@ -119,8 +119,8 @@ fi
 
 ## ======================================================================
 
-tty=$(tty |sed 's#^/dev/##')
-export tty
+BOOTSHOOT_TTY=$(tty |sed 's#^/dev/##')
+export BOOTSHOOT_TTY
 
 echo "Entering BootBhooting directory $bootshoot_dir ..."
 cat <<'EOT' >"$bootshoot_dir/bin/bootshoot"
@@ -134,10 +134,21 @@ trap 'umount /proc' EXIT
 
 pids() {
   ps -ef \
-  |tail -n +2 \
-  |egrep -v "[ @]$tty( |$)" \
-  |awk '{print $2}' \
-  ;
+  |(
+    read x
+    while read x pid ppid x x tty x cmd; do
+      ## Login user's processes
+      [ x"$tty" = x"$BOOTSHOOT_TTY" ] && continue
+      ## Remote user's sshd process
+      cmd="$cmd "
+      [ -z "${cmd%%*@$BOOTSHOOT_TTY *}" ] && continue
+      ## BootShooting and child processes
+      [ x"$ppid" = x"$$" ] && continue
+      [ x"$pid" = x"$$" ] && continue
+      ## Other processes
+      echo $pid
+    done
+  )
 }
 
 confirm() {
