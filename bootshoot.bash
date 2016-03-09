@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## BootShooting: Shoot itself in the boots
+## BootShooting: Shred files in a running OS (Shoot itself in the boots)
 ## Copyright (c) 2016 SATOH Fumiyasu @ OSS Technology Corp., Japan
 ##
 ## License: GNU Genera Public Licsense version 3
