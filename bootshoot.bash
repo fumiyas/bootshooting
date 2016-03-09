@@ -23,6 +23,7 @@ bin_requires=(
   /bin/cat
   /bin/mount
   /bin/umount
+  /bin/sync
   /bin/ps
   /bin/dd
   /bin/sleep
@@ -188,8 +189,8 @@ while :; do
   case $answer in
   1)
     echo 'Sending SIGSTOP to all processes except BootShooting ...'
-    signaled=
-    trap 'signaled=set' USR1
+    timedout=
+    trap 'timedout=set' USR1
     pids=$(pids)
     kill -STOP $pids
     (
@@ -206,6 +207,11 @@ while :; do
     read x
     kill -9 $!
     trap - USR1
+    if [ -z "$timedout" ]; then
+      ## Prevent kernel panic on flushing after BootShooting
+      echo 'Flushing cached writes to filesystem in storge ...'
+      sync
+    fi
     ;;
   2)
     PS1='BootShooting@$BOOTSHOOT_HOSTNAME # ' /bin/sh
