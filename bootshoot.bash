@@ -9,7 +9,6 @@
 set -u
 set -e
 set -o pipefail
-shopt -s lastpipe
 umask 0022
 
 export LC_ALL=C
