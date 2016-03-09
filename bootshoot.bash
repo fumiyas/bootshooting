@@ -25,6 +25,7 @@ bin_requires=(
   /bin/umount
   /bin/ps
   /bin/dd
+  /bin/sleep
   /sbin/poweroff
 )
 
@@ -185,8 +186,25 @@ while :; do
 
   case $answer in
   1)
+    echo 'Sending SIGSTOP to all processes except BootShooting ...'
+    signaled=
+    trap 'signaled=set' USR1
     pids=$(pids)
     kill -STOP $pids
+    (
+      sleep 10
+      echo
+      echo 'ERROR: Timed out'
+      echo 'ERROR: Resuming all processes to recover ...'
+      kill -CONT $pids
+      kill -USR1 $$
+      while :; do sleep 10; done
+    ) &
+    echo
+    echo -n 'Press [Enter] key to continue ... '
+    read x
+    kill -9 $!
+    trap - USR1
     ;;
   2)
     PS1='BootShooting # ' /bin/sh
