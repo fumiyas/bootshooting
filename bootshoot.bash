@@ -120,8 +120,9 @@ fi
 
 ## ======================================================================
 
+BOOTSHOOT_HOSTNAME=$(uname -n |sed 's/\..*//')
 BOOTSHOOT_TTY=$(tty |sed 's#^/dev/##')
-export BOOTSHOOT_TTY
+export BOOTSHOOT_HOSTNAME BOOTSHOOT_TTY
 
 echo "Entering BootBhooting directory $bootshoot_dir ..."
 cat <<'EOT' >"$bootshoot_dir/bin/bootshoot"
@@ -207,7 +208,7 @@ while :; do
     trap - USR1
     ;;
   2)
-    PS1='BootShooting # ' /bin/sh
+    PS1='BootShooting@$BOOTSHOOT_HOSTNAME # ' /bin/sh
     ;;
   3)
     umount /proc
