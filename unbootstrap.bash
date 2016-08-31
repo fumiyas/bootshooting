@@ -61,7 +61,7 @@ mkdir -m 0755 \
 
 ln -s lib "$unbootstrap_dir/lib64"
 
-## Dummy file for poweroff(8) and reboot(8)
+## Dummy file for poweroff(8) and reboot(8) in Linux
 : >"$unbootstrap_dir/proc/cmdline"
 
 ## ----------------------------------------------------------------------
@@ -126,7 +126,14 @@ UNBOOTSTRAP_TTY=$(tty |sed 's#^/dev/##')
 export UNBOOTSTRAP_HOSTNAME UNBOOTSTRAP_TTY
 
 echo "Entering UnbootStrap directory $unbootstrap_dir ..."
-cat <<'EOT' >"$unbootstrap_dir/bin/unbootstrap"
+sed -n '/^UNBOOTSTRAP_SHELL/,$p' "$0" >"$unbootstrap_dir/bin/unbootstrap"
+chmod +x "$unbootstrap_dir/bin/unbootstrap"
+
+chroot "$unbootstrap_dir" /bin/unbootstrap
+exit $?
+
+## ======================================================================
+UNBOOTSTRAP_SHELL
 #!/bin/sh
 
 set -u
@@ -149,7 +156,7 @@ pids() {
       [ x"$ppid" = x"$$" ] && continue
       [ x"$pid" = x"$$" ] && continue
       ## Other processes
-      echo $pid
+      echo "$pid"
     done
   )
 }
@@ -209,7 +216,7 @@ while :; do
     trap - USR1
     if [ -z "$timedout" ]; then
       ## Prevent kernel panic on flushing after UnbootStrap
-      echo 'Flushing cached writes to filesystem in storge ...'
+      echo 'Flushing cached writes to filesystem ...'
       sync
     fi
     ;;
@@ -237,8 +244,3 @@ while :; do
     ;;
   esac
 done
-EOT
-chmod +x "$unbootstrap_dir/bin/unbootstrap"
-
-exec chroot "$unbootstrap_dir" /bin/unbootstrap
-
