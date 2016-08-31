@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## UnbootStrap: Shred files in a running OS (Shoot yourself in your boots)
+## UnbootStrap: Shred files in a remote running OS (Shoot yourself in your boots)
 ## Copyright (c) 2016 SATOH Fumiyasu @ OSS Technology Corp., Japan
 ##
 ## License: GNU Genera Public Licsense version 3
