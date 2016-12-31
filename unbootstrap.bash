@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## UnbootStrap: Shred files in a remote running OS (Shoot yourself in your boots)
+## Unbootstrap: Shred files in a remote running OS (Shoot yourself in your boots)
 ## Copyright (c) 2016 SATOH Fumiyasu @ OSS Technology Corp., Japan
 ##
 ## License: GNU Genera Public Licsense version 3
@@ -45,7 +45,7 @@ lib_requires=(
 
 unbootstrap_dir="/tmp/${0##*/}.$$.tmp"
 
-echo "Creating UnbootStrap directory $unbootstrap_dir ..."
+echo "Creating Unbootstrap directory $unbootstrap_dir ..."
 
 mkdir -m 0700 "$unbootstrap_dir"
 
@@ -125,7 +125,7 @@ UNBOOTSTRAP_HOSTNAME=$(uname -n |sed 's/\..*//')
 UNBOOTSTRAP_TTY=$(tty |sed 's#^/dev/##')
 export UNBOOTSTRAP_HOSTNAME UNBOOTSTRAP_TTY
 
-echo "Entering UnbootStrap directory $unbootstrap_dir ..."
+echo "Entering Unbootstrap directory $unbootstrap_dir ..."
 sed -n '/^UNBOOTSTRAP_SHELL/,$p' "$0" >"$unbootstrap_dir/bin/unbootstrap"
 chmod +x "$unbootstrap_dir/bin/unbootstrap"
 
@@ -152,7 +152,7 @@ pids() {
       ## Remote user's sshd process
       cmd="$cmd "
       [ -z "${cmd%%*@$UNBOOTSTRAP_TTY *}" ] && continue
-      ## UnbootStrap and child processes
+      ## Unbootstrap and child processes
       [ x"$ppid" = x"$$" ] && continue
       [ x"$pid" = x"$$" ] && continue
       ## Other processes
@@ -179,14 +179,14 @@ mount -t proc proc /proc
 
 while :; do
   echo
-  echo 'UnbootStrap Menu:'
+  echo 'Unbootstrap Menu:'
   echo
-  echo '  1 : Suspend all processes except UnbootStrap processes'
-  echo '  2 : Start /bin/sh in UnbootStrap environment'
+  echo '  1 : Suspend all processes except Unbootstrap processes'
+  echo '  2 : Start /bin/sh in Unbootstrap environment'
   echo '  3 : Force to poweroff'
   echo '  4 : Force to reboot'
   echo '  5 : Resume all suspended processes'
-  echo '  6 : Exit from UnbootStrap environment'
+  echo '  6 : Exit from Unbootstrap environment'
   echo
   echo -n 'Enter a number to do: '
 
@@ -195,7 +195,7 @@ while :; do
 
   case $answer in
   1)
-    echo 'Sending SIGSTOP to all processes except UnbootStrap ...'
+    echo 'Sending SIGSTOP to all processes except Unbootstrap ...'
     timedout=
     trap 'timedout=set' USR1
     pids=$(pids)
@@ -215,13 +215,13 @@ while :; do
     kill -9 $!
     trap - USR1
     if [ -z "$timedout" ]; then
-      ## Prevent kernel panic on flushing after UnbootStrap
+      ## Prevent kernel panic on flushing after Unbootstrap
       echo 'Flushing cached writes to filesystem ...'
       sync
     fi
     ;;
   2)
-    PS1='UnbootStrap@$UNBOOTSTRAP_HOSTNAME # ' /bin/sh
+    PS1='Unbootstrap@$UNBOOTSTRAP_HOSTNAME # ' /bin/sh
     ;;
   3)
     umount /proc
