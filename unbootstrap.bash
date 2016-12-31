@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## Unbootstrap: Shred files in a remote running OS (Shoot yourself in your boots)
+## Unbootstrap: Shred files in a remote running OS (Shoot yourself in the foot)
 ## Copyright (c) 2016 SATOH Fumiyasu @ OSS Technology Corp., Japan
 ##
 ## License: GNU Genera Public Licsense version 3
@@ -15,7 +15,7 @@ export LC_ALL=C
 
 ## ======================================================================
 
-busybox_path="/bin/busybox"
+busybox_path=""
 
 bin_requires=(
   /bin/sh
@@ -30,7 +30,8 @@ bin_requires=(
 )
 
 bin_optionals=(
-  "$busybox_path"
+  /bin/busybox
+  /sbin/busybox
   /bin/lsblk
   /usr/bin/shred
   /sbin/fsfreeze
@@ -89,6 +90,10 @@ for bin in "${bin_requires[@]}"; do
 done
 
 for bin in "${bin_optionals[@]}"; do
+  if [[ ${bin##*/} == "busybox" ]]; then
+    [[ -n $busybox_path ]] && continue
+    busybox_path="$bin"
+  fi
   cp -pL "$bin" "$unbootstrap_dir/bin/" || continue
   bin_optionals_found+=("$bin")
 done
@@ -110,7 +115,7 @@ done
 
 ## ----------------------------------------------------------------------
 
-if [[ -x $busybox_path ]]; then
+if [[ -n $busybox_path ]]; then
   echo "Creating busybox commands in $unbootstrap_dir/bin ..."
 
   for bin in $("$busybox_path" |sed -n '1,/Currently defined functions/d; s/, */ /gp'); do
