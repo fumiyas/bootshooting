@@ -228,7 +228,8 @@ while :; do
     kill -9 $!
     trap - USR1
     if [ -z "$timedout" ]; then
-      ## Prevent kernel panic on flushing after Unbootstrap
+      ## Prevent kernel panic or unexpected behavior on flushing after
+      ## destroying filesystems in Unbootstrap environment
       echo 'Flushing cached writes to filesystem ...'
       sync
     fi
