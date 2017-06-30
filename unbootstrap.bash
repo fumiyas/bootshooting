@@ -103,7 +103,7 @@ done
 echo "Copying required libraries to $unbootstrap_dir/lib ..."
 
 lib_requires+=($(
-  ldd "${bin_requires[@]}" "${bin_optionals_found[@]}" \
+  { ldd "${bin_requires[@]}" "${bin_optionals_found[@]}" || :; } \
   |sed -n 's/ (.*//; s/.* => //p' \
   |sort -u \
   ;
