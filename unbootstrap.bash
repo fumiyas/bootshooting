@@ -55,6 +55,7 @@ mount -t tmpfs -o size=33554432,mode=0755 tmpfs "$unbootstrap_dir"
 mkdir -m 0755 \
   "$unbootstrap_dir/dev" \
   "$unbootstrap_dir/proc" \
+  "$unbootstrap_dir/sys" \
   "$unbootstrap_dir/tmp" \
   "$unbootstrap_dir/bin" \
   "$unbootstrap_dir/lib" \
@@ -144,8 +145,10 @@ UNBOOTSTRAP_SHELL
 set -u
 export PATH=/bin
 
-trap '' INT TERM
-trap 'umount /proc' EXIT
+atexit() {
+  umount /proc
+  umount /sys
+}
 
 pids() {
   ps -ef \
@@ -179,8 +182,13 @@ confirm() {
   return 1
 }
 
+trap '' INT TERM
+trap 'ret=$?; atexit; exit $?' EXIT
+
 echo 'Mounting /proc ...'
 mount -t proc proc /proc
+echo 'Mounting /sys ...'
+mount -t sysfs sysfs /sys
 
 while :; do
   echo
