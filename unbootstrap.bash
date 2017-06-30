@@ -1,7 +1,7 @@
 #!/bin/bash
 ##
 ## Unbootstrap: Shred files in a remote running OS (Shoot yourself in the foot)
-## Copyright (c) 2016 SATOH Fumiyasu @ OSS Technology Corp., Japan
+## Copyright (c) 2016-2017 SATOH Fumiyasu @ OSS Technology Corp., Japan
 ##
 ## License: GNU Genera Public Licsense version 3
 ##
