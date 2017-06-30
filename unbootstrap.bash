@@ -229,11 +229,9 @@ while :; do
     PS1='Unbootstrap@$UNBOOTSTRAP_HOSTNAME # ' /bin/sh
     ;;
   3)
-    umount /proc
     poweroff -f
     ;;
   4)
-    umount /proc
     reboot -f
     ;;
   5)
