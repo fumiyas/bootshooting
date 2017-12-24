@@ -27,6 +27,8 @@ bin_requires=(
   /bin/dd
   /bin/sleep
   /sbin/poweroff
+  /sbin/swapon
+  /sbin/swapoff
 )
 
 bin_optionals=(
@@ -135,7 +137,9 @@ echo "Entering Unbootstrap directory $unbootstrap_dir ..."
 sed '1,/^UNBOOTSTRAP_SHELL$/d' "$0" >"$unbootstrap_dir/bin/unbootstrap"
 chmod +x "$unbootstrap_dir/bin/unbootstrap"
 
+swapoff -a
 chroot "$unbootstrap_dir" /bin/unbootstrap
+swapon -a
 exit $?
 
 ## ======================================================================
