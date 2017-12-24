@@ -149,8 +149,9 @@ chmod +x "$unbootstrap_dir/bin/unbootstrap"
 
 swapoff -a
 chroot "$unbootstrap_dir" /bin/unbootstrap
+rc=$?
 swapon -a
-exit $?
+exit $rc
 
 ## ======================================================================
 UNBOOTSTRAP_SHELL
