@@ -132,7 +132,7 @@ UNBOOTSTRAP_TTY=$(tty |sed 's#^/dev/##')
 export UNBOOTSTRAP_HOSTNAME UNBOOTSTRAP_TTY
 
 echo "Entering Unbootstrap directory $unbootstrap_dir ..."
-sed -n '/^UNBOOTSTRAP_SHELL/,$p' "$0" >"$unbootstrap_dir/bin/unbootstrap"
+sed '1,/^UNBOOTSTRAP_SHELL$/d' "$0" >"$unbootstrap_dir/bin/unbootstrap"
 chmod +x "$unbootstrap_dir/bin/unbootstrap"
 
 chroot "$unbootstrap_dir" /bin/unbootstrap
