@@ -44,6 +44,10 @@ lib_requires=(
   /lib*/ld-*.so.*
 )
 
+cpio_quiet() {
+  cpio "$@" 2> >(sed '/^[0-9]\{1,\} blocks$/d' 1>&2)
+}
+
 ## ======================================================================
 
 unbootstrap_dir="/tmp/${0##*/}.$$.tmp"
@@ -70,18 +74,24 @@ ln -s lib "$unbootstrap_dir/lib64"
 
 ## ----------------------------------------------------------------------
 
+echo "Copying some files in /etc to $unbootstrap_dir/etc ..."
+
+(
+  cd / && find etc -maxdepth 1 -type f -print |cpio_quiet -o
+) \
+|(
+  cd "$unbootstrap_dir" && cpio_quiet -id
+)
+
+## ----------------------------------------------------------------------
+
 echo "Copying device files in /dev to $unbootstrap_dir/dev ..."
 
 (
-  cd / && find dev ! -type f -print \
-  |cpio -o \
-    2> >(sed '/^[0-9]\{1,\} blocks$/d' 1>&2) \
-  ;
+  cd / && find dev ! -type f -print |cpio_quiet -o
 ) \
 |(
-  cd "$unbootstrap_dir" && cpio -id \
-    2> >(sed '/^[0-9]\{1,\} blocks$/d' 1>&2) \
-  ;
+  cd "$unbootstrap_dir" && cpio_quiet -id
 )
 
 ## ----------------------------------------------------------------------
