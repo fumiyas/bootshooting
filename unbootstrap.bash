@@ -253,10 +253,10 @@ while :; do
     PS1='Unbootstrap@$UNBOOTSTRAP_HOSTNAME # ' /bin/sh
     ;;
   3)
-    poweroff -f
+    poweroff -ff
     ;;
   4)
-    reboot -f
+    reboot -ff
     ;;
   5)
     if confirm; then
