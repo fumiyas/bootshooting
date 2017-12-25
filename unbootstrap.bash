@@ -7,7 +7,6 @@
 ##
 
 set -u
-set -e
 set -o pipefail
 umask 0022
 
@@ -54,9 +53,9 @@ unbootstrap_dir="/tmp/${0##*/}.$$.tmp"
 
 echo "Creating Unbootstrap directory $unbootstrap_dir ..."
 
-mkdir -m 0700 "$unbootstrap_dir"
+mkdir -m 0700 "$unbootstrap_dir" || exit $?
 
-mount -t tmpfs -o size=33554432,mode=0755 tmpfs "$unbootstrap_dir"
+mount -t tmpfs -o size=33554432,mode=0755 tmpfs "$unbootstrap_dir" || exit $?
 
 mkdir -m 0755 \
   "$unbootstrap_dir/dev" \
@@ -65,12 +64,13 @@ mkdir -m 0755 \
   "$unbootstrap_dir/tmp" \
   "$unbootstrap_dir/bin" \
   "$unbootstrap_dir/lib" \
+|| exit $? \
 ;
 
-ln -s lib "$unbootstrap_dir/lib64"
+ln -s lib "$unbootstrap_dir/lib64" || exit $?
 
 ## Dummy file for poweroff(8) and reboot(8) in Linux
-: >"$unbootstrap_dir/proc/cmdline"
+: >"$unbootstrap_dir/proc/cmdline" || exit $?
 
 ## ----------------------------------------------------------------------
 
@@ -81,7 +81,7 @@ echo "Copying some files in /etc to $unbootstrap_dir/etc ..."
 ) \
 |(
   cd "$unbootstrap_dir" && cpio_quiet -id
-)
+) || exit $?
 
 ## ----------------------------------------------------------------------
 
@@ -92,14 +92,14 @@ echo "Copying device files in /dev to $unbootstrap_dir/dev ..."
 ) \
 |(
   cd "$unbootstrap_dir" && cpio_quiet -id
-)
+) || exit $?
 
 ## ----------------------------------------------------------------------
 
 echo "Copying commands to $unbootstrap_dir/bin ..."
 
 for bin in "${bin_requires[@]}"; do
-  cp -pL "$bin" "$unbootstrap_dir/bin/"
+  cp -pL "$bin" "$unbootstrap_dir/bin/" || exit $?
 done
 
 for bin in "${bin_optionals[@]}"; do
@@ -123,7 +123,7 @@ lib_requires+=($(
 ))
 
 for lib in "${lib_requires[@]}"; do
-  cp -pL "$lib" "$unbootstrap_dir/lib/"
+  cp -pL "$lib" "$unbootstrap_dir/lib/" || exit $?
 done
 
 ## ----------------------------------------------------------------------
@@ -133,7 +133,7 @@ if [[ -n $busybox_path ]]; then
 
   for bin in $("$busybox_path" |sed -n '1,/Currently defined functions/d; s/, */ /gp'); do
     [[ -e "$unbootstrap_dir/bin/$bin" ]] && continue
-    ln -s busybox "$unbootstrap_dir/bin/$bin"
+    ln -s busybox "$unbootstrap_dir/bin/$bin" || exit $?
   done
 fi
 
@@ -147,7 +147,7 @@ echo "Entering Unbootstrap directory $unbootstrap_dir ..."
 sed '1,/^UNBOOTSTRAP_SHELL$/d' "$0" >"$unbootstrap_dir/bin/unbootstrap"
 chmod +x "$unbootstrap_dir/bin/unbootstrap"
 
-swapoff -a
+swapoff -a || exit $?
 chroot "$unbootstrap_dir" /bin/unbootstrap
 rc=$?
 swapon -a
