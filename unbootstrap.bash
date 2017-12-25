@@ -198,7 +198,7 @@ confirm() {
 }
 
 trap '' INT TERM
-trap 'ret=$?; atexit; exit $?' EXIT
+trap 'rc=$?; atexit; exit $rc' EXIT
 
 echo 'Mounting /proc ...'
 mount -t proc proc /proc
