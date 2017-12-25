@@ -154,6 +154,7 @@ rc=$?
 ## Try to force to poweroff outside of Unbootstrap environment
 ## because systemd's poweroff(8) rejects to run in chroot.
 if [[ $rc == 100 ]]; then
+  echo -n 'Retrying to force to poweroff outside of Unbootstrap environment... '
   export LD_LIBRARY_PATH="$unbootstrap_dir/lib"
   "$unbootstrap_dir/lib"/ld*.so* "$unbootstrap_dir/bin/poweroff" -ff
   exit $?
@@ -262,10 +263,12 @@ while :; do
     PS1='Unbootstrap@$UNBOOTSTRAP_HOSTNAME # ' /bin/sh
     ;;
   3)
+    echo -n 'Trying to force to poweroff... '
     poweroff -ff
     exit 100
     ;;
   4)
+    echo -n 'Trying to force to reboot... '
     reboot -ff
     ;;
   5)
