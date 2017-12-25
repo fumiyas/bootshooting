@@ -150,6 +150,15 @@ chmod +x "$unbootstrap_dir/bin/unbootstrap"
 swapoff -a || exit $?
 chroot "$unbootstrap_dir" /bin/unbootstrap
 rc=$?
+
+## Try to force to poweroff outside of Unbootstrap environment
+## because systemd's poweroff(8) rejects to run in chroot.
+if [[ $rc == 100 ]]; then
+  export LD_LIBRARY_PATH="$unbootstrap_dir/lib"
+  "$unbootstrap_dir/lib"/ld*.so* "$unbootstrap_dir/bin/poweroff" -ff
+  exit $?
+fi
+
 swapon -a
 exit $rc
 
@@ -254,6 +263,7 @@ while :; do
     ;;
   3)
     poweroff -ff
+    exit 100
     ;;
   4)
     reboot -ff
